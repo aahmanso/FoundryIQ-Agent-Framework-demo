@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: foundryiq-agent-framework-demo
+metadata:
+  template: foundryiq-agent-framework-demo@0.0.1
+requiredVersions:
+  azd: ">= 1.17.0"
+
+services:
+  backend:
+    project: ./app/backend
+    language: py
+    host: containerapp
+    docker:
+      remoteBuild: true
+    hooks:
+      prebuild:
+        windows:
+          shell: pwsh
+          run: cd ../frontend;npm install;npm run build
+          interactive: false
+          continueOnError: false
+        posix:
+          shell: sh
+          run: cd ../frontend;npm install;npm run build
+          interactive: false
+          continueOnError: false
+
+
+hooks:
+  preprovision:
+    windows:
+      shell: pwsh
+      run: ./scripts/auth_init.ps1
+      interactive: true
+      continueOnError: false
+    posix:
+      shell: sh
+      run: ./scripts/auth_init.sh
+      interactive: true
+      continueOnError: false
+
+  postprovision:
+    windows:
+      shell: pwsh
+      run: |
+        ./scripts/auth_update.ps1
+        Write-Host "Running RBAC setup..."
+        bash ./scripts/setup_rbac.sh
+        Write-Host "Running OpenAI deployments setup..."
+        bash ./scripts/setup_openai_deployments.sh
+        Write-Host "Running index setup..."
+        bash ./scripts/setup_indexes.sh
+        Write-Host "Running knowledge sources setup..."
+        bash ./scripts/setup_knowledge_sources.sh
+        Write-Host "Running knowledge bases setup..."
+        bash ./scripts/setup_knowledge_bases.sh
+        Write-Host "Uploading sample data..."
+        bash ./scripts/upload_sample_data.sh
+      interactive: true
+      continueOnError: false
+
+    posix:
+      shell: sh
+      run: |
+        set -e
+        ./scripts/auth_update.sh
+        ./scripts/setup_rbac.sh
+        ./scripts/setup_openai_deployments.sh
+        ./scripts/setup_indexes.sh
+        ./scripts/setup_knowledge_sources.sh
+        ./scripts/setup_knowledge_bases.sh
+        ./scripts/upload_sample_data.sh
+      interactive: true
