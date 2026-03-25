@@ -151,6 +151,23 @@ Try: "What is the PTO policy?" or "Tell me about the fitness watch"
 | KB errors | Run `./scripts/setup_rbac.sh` |
 | Missing env vars locally | Run `eval $(azd env get-values \| sed 's/^/export /')` |
 
+## 📚 Learning Guides
+
+Explore the [docs/guides/](docs/guides/) for hands-on tutorials and deep-dives:
+
+| Guide | Description | Level |
+|-------|-------------|-------|
+| [Quick Start](docs/guides/01-quick-start.md) | Deploy end-to-end with `azd up` | 🟢 Beginner |
+| [Architecture Overview](docs/guides/02-architecture-overview.md) | How the multi-agent system works | 🟢 Beginner |
+| [Add a New Agent](docs/guides/03-add-new-agent.md) | Extend with a Finance agent | 🔵 Intermediate |
+| [Customize Knowledge Bases](docs/guides/04-customize-knowledge-bases.md) | Replace sample data with your own | 🔵 Intermediate |
+| [Prompt Engineering Lab](docs/guides/05-prompt-engineering-lab.md) | Experiment with prompts | 🔵 Intermediate |
+| [Evaluate & Optimize](docs/guides/06-evaluate-optimize-agents.md) | Measure and improve quality | 🟣 Advanced |
+| [Deploy Hosted Agents](docs/guides/07-deploy-hosted-agents.md) | Containerize for Foundry runtime | 🟣 Advanced |
+| [Tracing & Observability](docs/guides/08-tracing-observability.md) | Monitor with App Insights | 🟣 Advanced |
+| [Troubleshooting](docs/guides/09-troubleshooting.md) | Solutions for common issues | 🟠 Reference |
+| [New Foundry vs Legacy](docs/guides/10-new-foundry-vs-legacy.md) | Migration from ML Hub | 🟠 Reference |
+
 ## License
 
 MIT License
