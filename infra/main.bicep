@@ -145,46 +145,18 @@ module storage 'core/storage/storage-account.bicep' = {
 var aiServicesName = '${abbrs.cog}ais-${resourceToken}'
 var projectName = 'proj-${resourceToken}'
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
-  name: aiServicesName
-  location: openAiLocation
-  tags: tags
-  kind: 'AIServices'
-  sku: { name: 'S0' }
-  identity: { type: 'SystemAssigned' }
-  properties: {
-    customSubDomainName: aiServicesName
-    publicNetworkAccess: 'Enabled'
-    disableLocalAuth: true
-    allowProjectManagement: true
+module aiServicesFoundry 'core/ai/ai-services-foundry.bicep' = {
+  name: 'ai-services-foundry'
+  scope: rg
+  params: {
+    name: aiServicesName
+    location: openAiLocation
+    tags: tags
+    modelName: chatGptModelName
+    modelVersion: chatGptModelVersion
+    modelCapacity: chatGptDeploymentCapacity
+    projectName: projectName
   }
-}
-
-// Deploy gpt-4.1 model to AIServices for Agent Framework
-resource aiServicesGptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
-  parent: aiServices
-  name: chatGptModelName
-  sku: {
-    name: 'GlobalStandard'
-    capacity: chatGptDeploymentCapacity
-  }
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: chatGptModelName
-      version: chatGptModelVersion
-    }
-  }
-}
-
-// Foundry Project under AIServices
-resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
-  parent: aiServices
-  name: projectName
-  location: openAiLocation
-  tags: tags
-  identity: { type: 'SystemAssigned' }
-  properties: {}
 }
 
 // RBAC – AIServices Managed Identity → Search & Storage
@@ -192,7 +164,7 @@ module searchReaderRoleAIS 'core/security/role.bicep' = {
   scope: rg
   name: 'search-reader-ais'
   params: {
-    principalId: aiServices.identity.principalId
+    principalId: aiServicesFoundry.outputs.principalId
     roleDefinitionId: '1407120a-92aa-4202-b7e9-c0e197c71c8f' // Search Index Data Reader
     principalType: 'ServicePrincipal'
   }
@@ -202,7 +174,7 @@ module searchContribRoleAIS 'core/security/role.bicep' = {
   scope: rg
   name: 'search-contrib-ais'
   params: {
-    principalId: aiServices.identity.principalId
+    principalId: aiServicesFoundry.outputs.principalId
     roleDefinitionId: '8ebe5a00-799e-43f5-93ac-243d3dce84a7' // Search Index Data Contributor
     principalType: 'ServicePrincipal'
   }
@@ -212,7 +184,7 @@ module storageRoleAIS 'core/security/role.bicep' = {
   scope: rg
   name: 'storage-role-ais'
   params: {
-    principalId: aiServices.identity.principalId
+    principalId: aiServicesFoundry.outputs.principalId
     roleDefinitionId: '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1' // Storage Blob Data Reader
     principalType: 'ServicePrincipal'
   }
@@ -223,7 +195,7 @@ module searchReaderRoleProject 'core/security/role.bicep' = {
   scope: rg
   name: 'search-reader-project'
   params: {
-    principalId: aiProject.identity.principalId
+    principalId: aiServicesFoundry.outputs.projectPrincipalId
     roleDefinitionId: '1407120a-92aa-4202-b7e9-c0e197c71c8f' // Search Index Data Reader
     principalType: 'ServicePrincipal'
   }
@@ -233,7 +205,7 @@ module searchContribRoleProject 'core/security/role.bicep' = {
   scope: rg
   name: 'search-contrib-project'
   params: {
-    principalId: aiProject.identity.principalId
+    principalId: aiServicesFoundry.outputs.projectPrincipalId
     roleDefinitionId: '8ebe5a00-799e-43f5-93ac-243d3dce84a7' // Search Index Data Contributor
     principalType: 'ServicePrincipal'
   }
@@ -243,7 +215,7 @@ module storageRoleProject 'core/security/role.bicep' = {
   scope: rg
   name: 'storage-role-project'
   params: {
-    principalId: aiProject.identity.principalId
+    principalId: aiServicesFoundry.outputs.projectPrincipalId
     roleDefinitionId: '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1' // Storage Blob Data Reader
     principalType: 'ServicePrincipal'
   }
@@ -288,7 +260,7 @@ module backend 'core/host/container-app.bicep' = {
       { name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT', value: embeddingModelName }
       { name: 'AZURE_SEARCH_SERVICE', value: searchService.outputs.name }
       { name: 'AZURE_SEARCH_ENDPOINT', value: searchService.outputs.endpoint }
-      { name: 'AZURE_AI_PROJECT_ENDPOINT', value: 'https://${aiServicesName}.services.ai.azure.com/api/projects/${projectName}' }
+      { name: 'AZURE_AI_PROJECT_ENDPOINT', value: aiServicesFoundry.outputs.projectEndpoint }
       { name: 'AZURE_OPENAI_DEPLOYMENT', value: chatGptModelName }
       { name: 'AZURE_STORAGE_ACCOUNT', value: storage.outputs.name }
       { name: 'USE_AI_FOUNDRY', value: string(useAIFoundry) }
@@ -452,5 +424,5 @@ output AZURE_OPENAI_EMBEDDING_DEPLOYMENT string = embeddingModelName
 output AZURE_SEARCH_SERVICE string = searchService.outputs.name
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output BACKEND_URI string = backend.outputs.uri
-output AZURE_AI_PROJECT_ENDPOINT string = 'https://${aiServicesName}.services.ai.azure.com/api/projects/${projectName}'
+output AZURE_AI_PROJECT_ENDPOINT string = aiServicesFoundry.outputs.projectEndpoint
 output AZURE_SEARCH_ENDPOINT string = searchService.outputs.endpoint

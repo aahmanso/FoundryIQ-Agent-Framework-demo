@@ -13,10 +13,10 @@ param encryptionWithCmk object = {
   enforcement: 'Unspecified'
 }
 @allowed([
-  'Default'
-  'HighDensity'
+  'default'
+  'highDensity'
 ])
-param hostingMode string = 'Default'
+param hostingMode string = 'default'
 @allowed([
   'enabled'
   'disabled'
@@ -56,6 +56,8 @@ resource search 'Microsoft.Search/searchServices@2025-05-01' = {
     authOptions: disableLocalAuth ? null : authOptions
     disableLocalAuth: disableLocalAuth
     encryptionWithCmk: encryptionWithCmk
+  // hostingMode casing is a known Bicep type definition inaccuracy
+  #disable-next-line BCP036
     hostingMode: hostingMode
     partitionCount: partitionCount
     publicNetworkAccess: publicNetworkAccess
