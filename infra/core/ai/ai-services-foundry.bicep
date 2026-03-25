@@ -20,8 +20,8 @@ param modelSkuName string = 'GlobalStandard'
 param projectName string
 
 // AIServices account with project management enabled
-// Note: allowProjectManagement is a valid runtime property not yet in Bicep type definitions
-resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+// Uses 2025-04-01-preview which supports allowProjectManagement
+resource aiServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
   name: name
   location: location
   tags: tags
@@ -32,14 +32,13 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     customSubDomainName: name
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: true
-    // allowProjectManagement is a valid runtime property not yet in Bicep type definitions
     #disable-next-line BCP037
     allowProjectManagement: true
   }
 }
 
 // Deploy model to AIServices
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview' = {
   parent: aiServices
   name: modelName
   sku: {
